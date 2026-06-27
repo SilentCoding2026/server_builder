@@ -63,24 +63,24 @@ jobs:
       - name: Pull latest
         run: git pull
 
-      - name: Create final_server if missing
+      - name: Run Minecraft Server
         run: |
-          if [ ! -f .github/workflows/final_server.yml ]; then
-            echo "final_server.yml not found, creating from template..."
-            JAR=$(ls server/*.jar 2>/dev/null | head -1 | xargs basename)
-            JVM="-Xmx6G -Xms6G"
-            sed -e "s|{{JVM}}|$JVM|g" -e "s|{{SERVER_JAR}}|$JAR|g" \
-              templates/final_server.yml.tpl > .github/workflows/final_server.yml
-            git config user.name 'github-actions[bot]'
-            git config user.email 'github-actions[bot]@users.noreply.github.com'
-            git add .github/workflows/final_server.yml
-            git commit -m 'add final server workflow'
-            git push
+          JAR=$(ls server/*.jar 2>/dev/null | head -1)
+          if [ -z "$JAR" ]; then
+            echo "No jar found in server/"
+            exit 1
           fi
+          echo "Starting server with: $JAR"
+          screen -dmS mc java -Xmx6G -Xms6G -jar "$JAR" nogui
+          sleep infinity
 
-      - name: Trigger Final Server
+      - name: Stop & backup
+        if: always()
         run: |
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          gh workflow run final_server.yml --ref "$BRANCH"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          screen -S mc -X stuff "stop$(printf \\r)" || true
+          sleep 15
+          rm -f server_backup.7z*
+          7z a server_backup.7z server
+          7z a server_backup.7z.part server_backup.7z -v95m
+          gh release delete latest --yes || true
+          gh release create latest server_backup.7z.part*
