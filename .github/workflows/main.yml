@@ -1,0 +1,59 @@
+name: Minecraft Server Builder
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  builder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          sudo apt update
+          sudo apt install -y p7zip-full jq screen
+          curl -L -o cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+          curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install python deps
+        run: pip install flask py7zr psutil
+
+      - name: Prepare dirs
+        run: |
+          mkdir -p server uploads static builder templates
+
+      - name: Start File Browser
+        run: |
+          filebrowser --root ./server --port 8081 --address 0.0.0.0 --noauth > fb.log 2>&1 &
+          sleep 3
+
+      - name: Start Admin Panel
+        run: |
+          python builder/panel.py > panel.log 2>&1 &
+          sleep 3
+
+      - name: Expose Panel
+        run: |
+          cloudflared tunnel --url http://localhost:8000 > panel_tunnel.log 2>&1 &
+          sleep 8
+          cat panel_tunnel.log
+
+      - name: Expose FileBrowser
+        run: |
+          cloudflared tunnel --url http://localhost:8081 > fb_tunnel.log 2>&1 &
+          sleep 8
+          cat fb_tunnel.log
+
+      - name: Keep alive
+        run: sleep infinity
