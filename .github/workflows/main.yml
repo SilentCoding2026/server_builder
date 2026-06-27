@@ -63,7 +63,24 @@ jobs:
       - name: Pull latest
         run: git pull
 
+      - name: Create final_server if missing
+        run: |
+          if [ ! -f .github/workflows/final_server.yml ]; then
+            echo "final_server.yml not found, creating from template..."
+            JAR=$(ls server/*.jar 2>/dev/null | head -1 | xargs basename)
+            JVM="-Xmx6G -Xms6G"
+            sed -e "s|{{JVM}}|$JVM|g" -e "s|{{SERVER_JAR}}|$JAR|g" \
+              templates/final_server.yml.tpl > .github/workflows/final_server.yml
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git add .github/workflows/final_server.yml
+            git commit -m 'add final server workflow'
+            git push
+          fi
+
       - name: Trigger Final Server
-        run: gh workflow run final_server.yml
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          gh workflow run final_server.yml --ref "$BRANCH"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
