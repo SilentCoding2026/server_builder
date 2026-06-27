@@ -1,0 +1,27 @@
+body {
+  background:#0f172a;
+  color:#e5e7eb;
+  font-family: sans-serif;
+}
+.card {
+  max-width:700px;
+  margin:40px auto;
+  background:#020617;
+  padding:20px;
+  border-radius:12px;
+}
+input, button {
+  width:100%;
+  margin:5px 0;
+  padding:10px;
+}
+button.green {
+  background:#22c55e;
+  color:black;
+  font-weight:bold;
+}
+pre {
+  background:#020617;
+  padding:10px;
+  border-radius:6px;
+}
