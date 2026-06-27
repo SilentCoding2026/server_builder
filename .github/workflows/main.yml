@@ -51,3 +51,11 @@ jobs:
         run: |
           cloudflared tunnel --url http://localhost:8081 &
           sleep 6
+
+      - name: Wait for Build
+        run: |
+          echo "Panel is running. Press BUILD button to continue."
+          while [ ! -f .build_triggered ]; do
+            sleep 5
+          done
+          echo "Build triggered! Proceeding..."

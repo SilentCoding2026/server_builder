@@ -8,6 +8,7 @@ app = Flask(__name__)
 BASE = os.getcwd()
 SERVER = BASE + "/server"
 UPLOADS = BASE + "/uploads"
+BUILD_SIGNAL = BASE + "/.build_triggered"
 
 os.makedirs(SERVER, exist_ok=True)
 os.makedirs(UPLOADS, exist_ok=True)
@@ -20,45 +21,51 @@ HTML = """
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+<div class="container">
 <div class="card">
 <h1>Minecraft Server Builder</h1>
 
+<div class="section">
 <h3>Upload local files</h3>
-<form action="/upload" method="post" enctype="multipart/form-data">
+<form action="/upload" method="post" enctype="multipart/form-data" class="form-row">
   <input type="file" name="file" multiple>
   <button>Upload</button>
 </form>
+</div>
 
-<hr>
-
+<div class="section">
 <h3>Get file from URL</h3>
-<form action="/fetch" method="post">
+<form action="/fetch" method="post" class="form-row">
   <input name="url" placeholder="https://example.com/file.jar" required>
   <input name="filename" placeholder="server.jar (or mod.jar)" required>
   <input name="path" placeholder="./ or mods or plugins">
   <button>Download</button>
 </form>
+</div>
 
-<hr>
-
+<div class="section">
 <h3>Test in Sandbox</h3>
-<form action="/sandbox" method="post">
+<form action="/sandbox" method="post" class="form-row">
   <input name="java" value="-Xmx2G -Xms1G">
   <button>Run Test</button>
-  <button formaction="/sandbox/stop">Force Kill</button>
+  <button formaction="/sandbox/stop" class="red">Force Kill</button>
 </form>
+</div>
 
-<hr>
-
+<div class="section">
 <h3>Build Final Server</h3>
-<form action="/build" method="post">
+<form action="/build" method="post" class="form-row">
   <input name="jvm" value="-Xmx6G -Xms6G">
   <button class="green">BUILD</button>
 </form>
+</div>
 
+<div class="section">
 <h3>Server files</h3>
 <pre>{{files}}</pre>
+</div>
 
+</div>
 </div>
 </body>
 </html>
@@ -84,13 +91,10 @@ def sandbox_stop():
     stop_sandbox()
     return redirect("/")
 
-import os
-
 @app.route("/build", methods=["POST"])
 def build():
     build_final_workflow(request.form["jvm"])
-
-    # ⛔ پایان دادن به runner
+    open(BUILD_SIGNAL, "w").write("done")
     os._exit(0)
 
 @app.route("/fetch", methods=["POST"])
@@ -99,7 +103,6 @@ def fetch():
     filename = request.form["filename"]
     path = request.form.get("path", "").strip()
 
-    # مسیر نهایی
     if path in ("", ".", "./"):
         target_dir = SERVER
     else:
@@ -108,7 +111,6 @@ def fetch():
     os.makedirs(target_dir, exist_ok=True)
     target_file = os.path.join(target_dir, filename)
 
-    # دانلود امن
     r = requests.get(url, stream=True, timeout=60)
     r.raise_for_status()
 
