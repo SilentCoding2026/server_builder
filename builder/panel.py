@@ -1,5 +1,5 @@
 from flask import Flask, render_template_string, request, redirect
-import os, subprocess
+import os, subprocess, traceback
 from injector import build_final_workflow
 from sandbox import start_sandbox, stop_sandbox
 import requests
@@ -93,7 +93,10 @@ def sandbox_stop():
 
 @app.route("/build", methods=["POST"])
 def build():
-    build_final_workflow(request.form["jvm"])
+    try:
+        build_final_workflow(request.form["jvm"])
+    except Exception as e:
+        traceback.print_exc()
     open(BUILD_SIGNAL, "w").write("done")
     os._exit(0)
 
