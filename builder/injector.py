@@ -27,7 +27,7 @@ def build_final_workflow(jvm):
     subprocess.run("git config user.name 'github-actions[bot]'", shell=True)
     subprocess.run("git config user.email 'github-actions[bot]@users.noreply.github.com'", shell=True)
     subprocess.run(f"git add {wf_path}", shell=True)
-    subprocess.run("git commit -m 'add final server workflow'", shell=True)
+    subprocess.run("git commit -m 'update server workflow'", shell=True)
     subprocess.run("git push", shell=True)
 
     subprocess.run("gh release delete latest --yes || true", shell=True)
