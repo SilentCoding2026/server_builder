@@ -42,6 +42,10 @@ jobs:
         run: |
           python builder/panel.py > panel.log 2>&1 &
           sleep 3
+      - name: Show panel log
+        run: |
+          sleep 2
+          cat panel.log
 
       - name: Expose Panel
         run: |
