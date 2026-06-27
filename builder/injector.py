@@ -29,3 +29,6 @@ def build_final_workflow(jvm):
     subprocess.run(f"git add {wf_path}", shell=True)
     subprocess.run("git commit -m 'add final server workflow'", shell=True)
     subprocess.run("git push", shell=True)
+
+    subprocess.run("gh release delete latest --yes || true", shell=True)
+    subprocess.run("gh release create latest server_backup.7z.part*", shell=True)

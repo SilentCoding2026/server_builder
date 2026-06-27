@@ -18,14 +18,14 @@ jobs:
 
       - name: Restore backup
         run: |
-          gh release download --pattern "*.7z.part*" || true
+          gh release download latest --pattern "*.7z.part*" || true
           if ls *.7z.part* 1> /dev/null 2>&1; then
             7z x server_backup.7z.part*
           fi
 
       - name: Run server
         run: |
-          screen -dmS mc java {{JVM}} -jar server/*.jar nogui
+          screen -dmS mc java {{JVM}} -jar server/{{SERVER_JAR}} nogui
           sleep infinity
 
       - name: Stop & backup
