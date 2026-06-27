@@ -84,10 +84,14 @@ def sandbox_stop():
     stop_sandbox()
     return redirect("/")
 
+import os
+
 @app.route("/build", methods=["POST"])
 def build():
     build_final_workflow(request.form["jvm"])
-    return "Final workflow created ✔"
+
+    # ⛔ پایان دادن به runner
+    os._exit(0)
 
 @app.route("/fetch", methods=["POST"])
 def fetch():
