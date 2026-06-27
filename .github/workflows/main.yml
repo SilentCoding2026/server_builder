@@ -25,39 +25,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install python deps
         run: pip install flask py7zr psutil requests
 
       - name: Prepare dirs
-        run: |
-          mkdir -p server uploads static builder templates
+        run: mkdir -p server uploads
 
       - name: Start File Browser
         run: |
-          filebrowser --root ./server --port 8081 --address 0.0.0.0 --noauth > fb.log 2>&1 &
-          sleep 3
+          filebrowser --root ./server --port 8081 --address 0.0.0.0 --noauth &
+          sleep 2
 
       - name: Start Admin Panel
         run: |
-          python builder/panel.py > panel.log 2>&1 &
-          sleep 3
-      - name: Show panel log
-        run: |
+          python builder/panel.py &
           sleep 2
-          cat panel.log
 
       - name: Expose Panel
         run: |
-          cloudflared tunnel --url http://localhost:8000 > panel_tunnel.log 2>&1 &
-          sleep 8
-          cat panel_tunnel.log
+          cloudflared tunnel --url http://localhost:8000 &
+          sleep 6
 
       - name: Expose FileBrowser
         run: |
-          cloudflared tunnel --url http://localhost:8081 > fb_tunnel.log 2>&1 &
-          sleep 8
-          cat fb_tunnel.log
-
-      - name: Keep alive
-        run: sleep infinity
+          cloudflared tunnel --url http://localhost:8081 &
+          sleep 6
