@@ -2,7 +2,7 @@ from flask import Flask, render_template_string, request, redirect
 import os, subprocess
 from injector import build_final_workflow
 from sandbox import start_sandbox, stop_sandbox
-
+import requests
 app = Flask(__name__)
 
 BASE = os.getcwd()
@@ -23,26 +23,40 @@ HTML = """
 <div class="card">
 <h1>Minecraft Server Builder</h1>
 
+<h3>Upload local files</h3>
 <form action="/upload" method="post" enctype="multipart/form-data">
-<h3>Upload server.jar / mods / plugins</h3>
-<input type="file" name="file" multiple>
-<button>Upload</button>
+  <input type="file" name="file" multiple>
+  <button>Upload</button>
 </form>
 
-<form action="/sandbox" method="post">
+<hr>
+
+<h3>Get file from URL</h3>
+<form action="/fetch" method="post">
+  <input name="url" placeholder="https://example.com/file.jar" required>
+  <input name="filename" placeholder="server.jar (or mod.jar)" required>
+  <input name="path" placeholder="./ or mods or plugins">
+  <button>Download</button>
+</form>
+
+<hr>
+
 <h3>Test in Sandbox</h3>
-<input name="java" placeholder="-Xmx2G -Xms1G" value="-Xmx2G -Xms1G">
-<button>Run Test</button>
-<button formaction="/sandbox/stop">Force Kill</button>
+<form action="/sandbox" method="post">
+  <input name="java" value="-Xmx2G -Xms1G">
+  <button>Run Test</button>
+  <button formaction="/sandbox/stop">Force Kill</button>
 </form>
 
-<form action="/build" method="post">
+<hr>
+
 <h3>Build Final Server</h3>
-<input name="jvm" placeholder="-Xmx6G -Xms6G">
-<button class="green">BUILD</button>
+<form action="/build" method="post">
+  <input name="jvm" value="-Xmx6G -Xms6G">
+  <button class="green">BUILD</button>
 </form>
 
-<h3>Files</h3>
+<h3>Server files</h3>
 <pre>{{files}}</pre>
 
 </div>
@@ -74,5 +88,31 @@ def sandbox_stop():
 def build():
     build_final_workflow(request.form["jvm"])
     return "Final workflow created ✔"
+
+@app.route("/fetch", methods=["POST"])
+def fetch():
+    url = request.form["url"]
+    filename = request.form["filename"]
+    path = request.form.get("path", "").strip()
+
+    # مسیر نهایی
+    if path in ("", ".", "./"):
+        target_dir = SERVER
+    else:
+        target_dir = os.path.join(SERVER, path)
+
+    os.makedirs(target_dir, exist_ok=True)
+    target_file = os.path.join(target_dir, filename)
+
+    # دانلود امن
+    r = requests.get(url, stream=True, timeout=60)
+    r.raise_for_status()
+
+    with open(target_file, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+
+    return redirect("/")
 
 app.run("0.0.0.0", 8000)
