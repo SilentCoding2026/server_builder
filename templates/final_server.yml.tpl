@@ -25,7 +25,7 @@ jobs:
 
       - name: Run server
         run: |
-          screen -dmS mc java {{JVM}} -jar server/{{SERVER_JAR}} nogui
+          screen -dmS mc java {{JVM}} -jar {{SERVER_JAR}} nogui
           sleep infinity
 
       - name: Stop & backup
@@ -34,7 +34,7 @@ jobs:
           screen -S mc -X stuff "stop$(printf \\r)" || true
           sleep 15
           rm -f server_backup.7z*
-          7z a server_backup.7z server
+          7z a server_backup.7z .
           7z a server_backup.7z.part server_backup.7z -v95m
           gh release delete latest --yes || true
           gh release create latest server_backup.7z.part*

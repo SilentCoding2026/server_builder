@@ -5,7 +5,7 @@ def build_final_workflow(jvm):
     make_eula("server")
 
     subprocess.run("rm -f server_backup.7z*", shell=True)
-    subprocess.run("7z a server_backup.7z server", shell=True)
+    subprocess.run("cd server && 7z a ../server_backup.7z .", shell=True)
     subprocess.run("7z a server_backup.7z.part server_backup.7z -v95m", shell=True)
 
     state_path = "builder/server_state.json"
